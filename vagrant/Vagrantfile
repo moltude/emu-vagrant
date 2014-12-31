@@ -1,0 +1,19 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "hashicorp/precise32"
+  config.vm.hostname= 'ubuntu'
+  config.vm.provision "shell" do |s| 
+  	s.path = "bootstrap.sh"
+  	s.privileged = "false"
+  	s.args = "
+  	'' # emu home directory e.g. /home/emu/
+  	'' # client name e.g. upmaa
+  	'' # texpress version number e.g. 8.3.013
+  	'' # texapi version number e.g. 6.0.1
+  	'' # URL to client's server 
+  	'' # URL to texpress 
+  	'' # URL to texapi
+  	'' # Texpress license key
+  	'f00bar' # emu password (doesn't work atm)
+  	" 
+  	end
+end
