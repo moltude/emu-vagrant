@@ -23,20 +23,41 @@ echo 'EMU HOME' ${EMU_HOME}
 # Create emuadmin group
 addgroup emuadmin
 # Create emu account and add to emuadmin group
-adduser --home ${EMU_HOME} --ingroup emuadmin --gecos "" emu # > /dev/null 2>&1
+adduser --home ${EMU_HOME} --ingroup emuadmin --gecos "" emu > /dev/null 2>&1
 # echo ${thePassword} | passwd emu --stdin
 
 ####################
 ### Dependencies ###
 ####################
 
-sudo apt-get install -y curl > /dev/null 2>&1
+echo '**** Installing dependencies...'
+
+# taken from 
+# http://askubuntu.com/questions/146921/how-do-i-apt-get-y-dist-upgrade-without-a-grub-config-prompt
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" update
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
 
 # Update all modules
-apt-get update --fix-missing > /dev/null 2>&1
+# sudo apt-get update -y && sudo apt-get dist-upgrade -y
+
+# sudo apt-get update --fix-missing # > /dev/null 2>&1
+
+sudo apt-get install -y curl #> /dev/null 2>&1
+
+sudo apt-get install make #> /dev/null 2>&1
+
 #Perl
-apt-get install -y perl
-apt-get install -y xinetd > /dev/null 2>&1
+sudo apt-get install -y perl
+sudo apt-get install -y xinetd > /dev/null 2>&1
+
+
+# CPAN
+sudo apt-get install cpanminus -y # > /dev/null 2>&1
+
+# Update outdated
+sudo cpanm App::cpanoutdated # > /dev/null 2>&1
+
+echo '...finished *****'
 # Apache
 #apt-get install -y apache2
 #rm -rf /var/www
@@ -83,11 +104,14 @@ ln -s ${TEXPRESS_VER} 8.3
 
 echo 'Texpress install complete.' >> ${EMU_HOME}'/install_log/log.txt' 2>&1
 
+# Add to PATH
+export PATH=$PATH:${EMU_HOME}/texpress/8.3/bin
+
 # TEXAPI INSTALL
 cd ${EMU_HOME}/texpress
 mkdir ${TEXAPI_VER}
 wget -q -O texapi.sh ${TEXAPI_LINK} >>${EMU_HOME}'/install_log/log.txt' 2>&1
-sh texapi.sh -i ~emu/texpress/${TEXAPI_VER} >> ${EMU_HOME}'/install_log/log.txt' 2>&1
+sh texapi.sh -i ${EMU_HOME}/texpress/${TEXAPI_VER} >> ${EMU_HOME}'/install_log/log.txt' 2>&1
 \rm -f texapi
 ln -s ${TEXAPI_VER} texapi
 \rm -f texapi.sh
@@ -104,19 +128,29 @@ wget -q -O emu-${CLIENT}.sh ${EMU_LINK} >> ${EMU_HOME}'/install_log/log.txt' 2>&
 echo 'Begining install..'
 # Changed this from emu-clientname-YYYYMMDD.sh to a standard file name 
 sh emu-${CLIENT}.sh >> ${EMU_HOME}'/install_log/log.txt' 2>&1
+
+# Add to PATH
+export PATH=$PATH:${EMU_HOME}/emu/${CLIENT}/bin
+
 . ./.profile
 bin/emuinstall ${CLIENT} >> ${EMU_HOME}'/install_log/log.txt' 2>&1
 cd ${EMU_HOME}/${CLIENT}
-cp .profile.parent ../.profile
+cp  .profile.parent  ../.profile
 cd ..
 
 # Add a single line client clientname to the file and save it. 
 # If a default client is already registered then you may leave the existing value.
+
+echo 'Current working directory before setting client' $(pwd)
+
 echo client ${CLIENT} >> '.profile-local'
 
-. ./.profile
+.  ./.profile
 client ${CLIENT}
-cd etc
+
+echo 'Current working directory after setting client' $(pwd)
+
+# cd etc
 ### OPTIONAL
 # 17.	View the config.sample file.
 # If you wish to alter some of these settings to suit the client then:
@@ -124,8 +158,8 @@ cd etc
 # 	2.	Enter vi config
 # 	3.	Edit as appropriate, then save the file.
 # Be careful to set EMUSMTPSERVER to the hostname of your mail server machine.
+#cd ..
 
-cd ..
 emubldlinks >> ${EMU_HOME}'/install_log/log.txt' 2>&1
 emulutsrebuild -t -f >> ${EMU_HOME}'/install_log/log.txt' 2>&1
 
@@ -194,10 +228,10 @@ echo "#
 #
 ${EMU_HOME}/${CLIENT}/bin/emuboot" >> /etc/init.d/rc.local
 
-${EMU_HOME}/${CLIENT}/bin/emuboot
+sudo ${EMU_HOME}/${CLIENT}/bin/emuboot
 
 echo 'EMu install complete'
 
 su emu <<'EOF'
-"emuload status"
+emuload status
 EOF
