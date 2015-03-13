@@ -12,3 +12,9 @@ How to use
 
 You will need to change the emu account password on the first login (change root password as well). 
 
+Next steps
+==========
+* Configure password configuration
+* Test local client
+* Test IMu
+* Clean up logging
