@@ -30,44 +30,46 @@ adduser --home ${EMU_HOME} --ingroup emuadmin --gecos "" emu > /dev/null 2>&1
 ### Dependencies ###
 ####################
 
-echo '**** Installing dependencies...'
+echo '###############################'
+echo '### Installing dependencies ###'
+echo '###############################'
 
-# taken from 
-# http://askubuntu.com/questions/146921/how-do-i-apt-get-y-dist-upgrade-without-a-grub-config-prompt
-# sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" update
-# sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
-
-# Update all modules
+# Update all
 # sudo apt-get update -y && sudo apt-get dist-upgrade -y
-
+# Update and fix missing
 # sudo apt-get update --fix-missing # > /dev/null 2>&1
 
+# Install CURL
 sudo apt-get install -y curl > /dev/null 2>&1
 
+# Install MAKE
 # sudo apt-get install -y make #> /dev/null 2>&1
 
-#Perl
+# Install Perl
 # sudo apt-get install -y perl
+
+# Install XINETD
 sudo apt-get install -y xinetd > /dev/null 2>&1
 
-
-# CPAN
+# Install CPAN
 # sudo apt-get install cpanminus -y # > /dev/null 2>&1
 
 # Update outdated
 # sudo cpanm App::cpanoutdated # > /dev/null 2>&1
 
+##############################
+###			EMu 		   ###
 ### Required for 64-bit OS ###
+##############################
 sudo apt-get install -y libpam0g:i386 > /dev/null 2>&1
 
-echo 'Finished installing dependencies *****'
 
 ############################
 ###   INSTALL TEXPRESS   ###
 ############################
 sudo chmod 755 -R ${EMU_HOME}
 
-# do as emu
+# Do as emu user
 su emu <<'EOF'
 cd ${EMU_HOME}
 
@@ -84,11 +86,6 @@ echo 'Finished.'
 sh texpress.sh >> ${EMU_HOME}'/install_log/log.txt' 2>&1
 source .profile
 export TEXGROUP=emuadmin
-
-
-####
-echo 'Current working directing...'${PWD}
-####
 
 echo '##################################'
 echo '###### INSTALLING TEXPRESS #######'
@@ -114,7 +111,6 @@ ln -s ${TEXPRESS_VER} 8.3
 
 echo 'Texpress install complete.' >> ${EMU_HOME}'/install_log/log.txt' 2>&1
 
-# TEXAPI INSTALL
 echo '##################################'
 echo '####### INSTALLING TEXAPI  #######'
 echo '##################################'
@@ -128,19 +124,19 @@ sh texapi.sh -i ${EMU_HOME}/texpress/${TEXAPI_VER} >> ${EMU_HOME}'/install_log/l
 ln -s ${TEXAPI_VER} texapi
 \rm -f texapi.sh
 
-###
-# EMU INSTALL
-###
-cd ${EMU_HOME}
-mkdir -p ${CLIENT}/install
-cd ${CLIENT}/install
-# Download client server
-echo 'Downloading client EMu server...'
-wget -q -O emu-${CLIENT}.sh ${EMU_LINK} >> ${EMU_HOME}'/install_log/log.txt' 2>&1
+
 
 echo '#############################'
 echo '### INSTALLING EMU SERVER ###'
 echo '#############################'
+
+cd ${EMU_HOME}
+mkdir -p ${CLIENT}/install
+cd ${CLIENT}/install
+
+# Download client server
+echo 'Downloading client EMu server...'
+wget -q -O emu-${CLIENT}.sh ${EMU_LINK} >> ${EMU_HOME}'/install_log/log.txt' 2>&1
 
 # Changed this from emu-clientname-YYYYMMDD.sh to a standard file name 
 sh emu-${CLIENT}.sh >> ${EMU_HOME}'/install_log/log.txt' 2>&1
@@ -151,23 +147,14 @@ bin/emuinstall ${CLIENT} # >> ${EMU_HOME}'/install_log/log.txt' 2>&1
 cd ${EMU_HOME}/${CLIENT}
 cp .profile.parent  ../.profile
 
-# set PATH at /home/emu
-###
-echo 'Current working directing for .profile PATH...'${PWD}
-###
-
 echo "export PATH=$PATH:${EMU_HOME}/${CLIENT}/bin:${EMU_HOME}/texpress/8.3/bin:" >> '.profile'
 source .profile
 
-# commented out to try and restore a working build
 cd ..
 
-# Add a single line client clientname to the file and save it. 
-# If a default client is already registered then you may leave the existing value.
-
-# 
-echo 'Current working directing...'${PWD}
-# 
+##
+# TODO :: Why do I get an 'unknown command' error when creating this file? 
+### 
 echo "client ${CLIENT}" >> '.profile-local'
 source .profile-local
 
@@ -179,7 +166,8 @@ client ${CLIENT}
 cd etc
 
 ###############################
-### OPTIONAL
+###### 		OPTIONAL	#######
+###############################
 # 
 # 17.	View the config.sample file.
 # If you wish to alter some of these settings to suit the client then:
@@ -197,18 +185,14 @@ echo 'Cleaning up install..'
 # Removal of the the temporary directory (and its contents) is recommended:
 \rm -fr install
 
-# In order to allow easier upgrades of Texpress (without having to update the etc/opts file) all 
-# Texpress options are now set in the client specific .profile-local file. When installing 
-# EMu 4.3 you will have to add all Texpress options required for the installation. In particular 
-# the dateorder, dateformat, timeformat, latitudeformat, longitudeformat, tmppath and loadmemory 
-# settings should be examined. Please see Texpress options for a list of acceptable values. 
-
-# Enter vi .profile-local and add the Texpress options to the file. An example file is:
-
 echo "TEXPRESSOPTS=${TEXPRESSOPTS} dateorder=mdy dateformat='dd MMM yyyy'
 export TEXPRESSOPTS" >> '.profile-local'
 source .profile-local
 
+
+###############################
+###### 		OPTIONAL	#######
+###############################
 # cd etc
 # Configure iMu Server
 cp imuserver.conf.sample imuserver.conf
@@ -219,15 +203,6 @@ cp imuserver.conf.sample imuserver.conf
 # 	If the IMu server is not to be used, the following steps are required:
 # 	1. 	Enter cd ..
 # 	2.	Enter touch loads/imu/disabled
-
-# 3. Installation Notes (EMu Server - root)
-# run as root
-
-#3.	Add new services to the end of /etc/services
-
-# source /home/emu/.profile
-# source /home/emu/upmaa/.profile
-
 
 EOF
 
