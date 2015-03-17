@@ -35,34 +35,48 @@ echo '### Installing dependencies ###'
 echo '###############################'
 
 # Update all
-# sudo apt-get update -y && sudo apt-get dist-upgrade -y
+
+echo 'Update fix-missing'
+# sudo ${cmd} update -y && sudo apt-get dist-upgrade -y > /dev/null 2>&1
 # Update and fix missing
-# sudo apt-get update --fix-missing # > /dev/null 2>&1
+sudo apt-get update --fix-missing > /dev/null 2>&1
 
 # Install CURL
+echo 'Installing CURL'
 sudo apt-get install -y curl > /dev/null 2>&1
 
 # Install MAKE
-# sudo apt-get install -y make #> /dev/null 2>&1
+# echo 'Installing Make'
+# sudo apt-get install -y make > /dev/null 2>&1
 
 # Install Perl
-# sudo apt-get install -y perl
+# echo 'Installing Perl'
+# sudo apt-get install -y perl > /dev/null 2>&1
 
 # Install XINETD
+echo 'Installing Xinetd'
 sudo apt-get install -y xinetd > /dev/null 2>&1
 
 # Install CPAN
-# sudo apt-get install cpanminus -y # > /dev/null 2>&1
+echo 'Installing CPAN'
+sudo apt-get install cpanminus -y > /dev/null 2>&1
 
 # Update outdated
-# sudo cpanm App::cpanoutdated # > /dev/null 2>&1
+echo 'Updating outdated modules'
+sudo cpanm App::cpanoutdated > /dev/null 2>&1
 
 ##############################
 ###			EMu 		   ###
 ### Required for 64-bit OS ###
 ##############################
-sudo apt-get install -y libpam0g:i386 > /dev/null 2>&1
+echo 'Installing 32-bit ia32-libs'
+sudo apt-get install -y ia32-libs > /dev/null 2>&1
+# sudo apt-get install -y ia32-libs-multiarch
+sudo apt-get install -y libpam-modules:i386 > /dev/null 2>&1
+sudo apt-get install -y libpam0g:i386  > /dev/null 2>&1
 
+# http://portal.archiware.com/support/index.php?/Knowledgebase/Article/View/108/16/errors-on-64-bit-ubuntu-linux
+ 
 
 ############################
 ###   INSTALL TEXPRESS   ###
@@ -73,17 +87,17 @@ sudo chmod 755 -R ${EMU_HOME}
 su emu <<'EOF'
 cd ${EMU_HOME}
 
-mkdir 'install_log'
+mkdir 'log'
 
 mkdir -p texpress/${TEXPRESS_VER}/install
 cd texpress/${TEXPRESS_VER}/install
 
 # Download texpress
 echo 'Downloading texpress...' ${TEXPRESS_LINK}
-wget -q -O texpress.sh ${TEXPRESS_LINK} >> ${EMU_HOME}'/install_log/log.txt' 2>&1
+wget -q -O texpress.sh ${TEXPRESS_LINK} >> ${EMU_HOME}'/log/log.txt' 2>&1
 echo 'Finished.'
 
-sh texpress.sh >> ${EMU_HOME}'/install_log/log.txt' 2>&1
+sh texpress.sh >> ${EMU_HOME}'/log/log.txt' 2>&1
 source .profile
 export TEXGROUP=emuadmin
 
@@ -91,7 +105,7 @@ echo '##################################'
 echo '###### INSTALLING TEXPRESS #######'
 echo '##################################'
 
-bin/texinstall ${EMU_HOME}/texpress/${TEXPRESS_VER} >> ${EMU_HOME}'/install_log/log.txt' 2>&1
+bin/texinstall ${EMU_HOME}/texpress/${TEXPRESS_VER} >> ${EMU_HOME}'/log/log.txt' 2>&1
 cd ${EMU_HOME}/texpress/${TEXPRESS_VER}
 source .profile
 
@@ -109,16 +123,35 @@ ${EMU_HOME}/texpress/${TEXPRESS_VER}/bin/texlicset < '.license'
 cd ${EMU_HOME}/texpress
 ln -s ${TEXPRESS_VER} 8.3
 
-echo 'Texpress install complete.' >> ${EMU_HOME}'/install_log/log.txt' 2>&1
+echo 'Texpress install complete.' >> ${EMU_HOME}'/log/log.txt' 2>&1
 
+EOF
+
+
+# Red Hat 6, CentOS 6 or Fedor Core 8 Linux
+#
+#  /etc/pam.d/texpress
+# Do as root
+
+echo 'Installing Texpress PAM entry to /etc/pam.d/texpress'
+
+echo "
+auth    required        pam_env.so
+@include common-auth
+@include common-account
+@include common-password
+@include common-session" >> /etc/pam.d/texpress
+
+
+su emu <<'EOF'
 echo '##################################'
 echo '####### INSTALLING TEXAPI  #######'
 echo '##################################'
 
 cd ${EMU_HOME}/texpress
 mkdir ${TEXAPI_VER}
-wget -q -O texapi.sh ${TEXAPI_LINK} >> ${EMU_HOME}'/install_log/log.txt' 2>&1
-sh texapi.sh -i ${EMU_HOME}/texpress/${TEXAPI_VER} >> ${EMU_HOME}'/install_log/log.txt' 2>&1
+wget -q -O texapi.sh ${TEXAPI_LINK} >> ${EMU_HOME}'/log/log.txt' 2>&1
+sh texapi.sh -i ${EMU_HOME}/texpress/${TEXAPI_VER} >> ${EMU_HOME}'/log/log.txt' 2>&1
 
 \rm -f texapi
 ln -s ${TEXAPI_VER} texapi
@@ -136,14 +169,14 @@ cd ${CLIENT}/install
 
 # Download client server
 echo 'Downloading client EMu server...'
-wget -q -O emu-${CLIENT}.sh ${EMU_LINK} >> ${EMU_HOME}'/install_log/log.txt' 2>&1
+wget -q -O emu-${CLIENT}.sh ${EMU_LINK} >> ${EMU_HOME}'/log/log.txt' 2>&1
 
 # Changed this from emu-clientname-YYYYMMDD.sh to a standard file name 
-sh emu-${CLIENT}.sh >> ${EMU_HOME}'/install_log/log.txt' 2>&1
+sh emu-${CLIENT}.sh >> ${EMU_HOME}'/log/log.txt' 2>&1
 
 source .profile
 
-bin/emuinstall ${CLIENT} # >> ${EMU_HOME}'/install_log/log.txt' 2>&1
+bin/emuinstall ${CLIENT} # >> ${EMU_HOME}'/log/log.txt' 2>&1
 cd ${EMU_HOME}/${CLIENT}
 cp .profile.parent  ../.profile
 
@@ -178,8 +211,8 @@ cd etc
 # cd ..
 ###############################
 
-emubldlinks >> ${EMU_HOME}'/install_log/log.txt' 2>&1
-emulutsrebuild -t -f >> ${EMU_HOME}'/install_log/log.txt' 2>&1
+emubldlinks >> ${EMU_HOME}'/log/log.txt' 2>&1
+emulutsrebuild -t -f >> ${EMU_HOME}'/log/log.txt' 2>&1
 
 echo 'Cleaning up install..'
 # Removal of the the temporary directory (and its contents) is recommended:

@@ -1,12 +1,23 @@
 Vagrant.configure("2") do |config|
-  config.vm.box = "hashicorp/precise64"
-  config.vm.hostname= 'ubuntu'
+  
+  # 64-bit Ubuntu OS
+  config.vm.box = "hashicorp/precise64" 
+  
+  # Hostname must match your local EMu server hostname for KE license validation
+  # config.vm.hostname= ''
+  
+  # Network configurations 
+  # Forward ports for iMu and EMu from the host to the guest VM (emu server)
   config.vm.network "forwarded_port", guest: 40000, host: 40000
+  config.vm.network "forwarded_port", guest: 20150, host: 20150
+  config.vm.network "public_network"
+  
   config.vm.provision "shell" do |s| 
     s.path = "bootstrap.sh"
-    s.privileged = "false"
+    s.privileged = "true"
 
     # arguments for indivudal installs some of these parameters are fairly standard (emu home directory, texpress version, texapi version)
+    # These args must be on the sampe line
   	s.args = "
   	'' # emu home directory e.g. /home/emu/
   	'' # client name e.g. upmaa
