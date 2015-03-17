@@ -1,7 +1,7 @@
 emu-vagrant
 ===========
 
-Builds a local EMu environment using Vagrant and bootstrapped install 
+Builds a local EMu environment using Vagrant and bootstrapped install. Currently provisions with Ubuntu 12 using VirtualBox. 
 
 How to use
 ==========
@@ -15,6 +15,5 @@ You will need to change the emu account password on the first login (change root
 Next steps
 ==========
 * Configure password configuration
-* Test local client
 * Test IMu
 * Clean up logging
